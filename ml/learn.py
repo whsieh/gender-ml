@@ -36,7 +36,7 @@ def ngram_features_from_name_data(nameData, threshold=10):
     ngrams = { ngram: index for index, ngram in enumerate(sorted(scores)) }
     return ngrams, scores
 
-def test_and_training_data_from_file(filename="names.json", testDatasetSize=1000):
+def test_and_training_data_from_file(filename="data/names.json", testDatasetSize=1000):
     allData = load_json_as_object(filename)
     allNames = np.array(allData.keys())
     testIndices = np.random.choice(np.arange(len(allNames)), testDatasetSize, replace=False)
@@ -87,4 +87,4 @@ if __name__ == "__main__":
     print "Feature vector length: ", len(ngramIndices)
     data, labels = featurize_name_data_and_labels(rawData, ngramIndices)
     svm = run_and_time("Training SVM...", lambda: train_svm_with_data(data, labels, C=50))
-    save_linear_classifier("linsvc", svm, ngramIndices, rawData)
+    save_linear_classifier("data/linsvc", svm, ngramIndices, rawData)

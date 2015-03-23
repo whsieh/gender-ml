@@ -77,28 +77,13 @@ def run_gender_test():
     # Tests the classifier against some anomalies...
     cls = GenderClassifier()
     print "NAME".ljust(15), "EXP".ljust(10), "L(DATA)".ljust(10), "L(DIST)".ljust(10), "DIST"
-    cls.debug("wenson", expected=0)
-    cls.debug("wenny", expected=1)
-    cls.debug("yehna", expected=1)
-    cls.debug("akash", expected=0)
-    cls.debug("rahul", expected=0)
-    cls.debug("anchal", expected=1)
-    cls.debug("subha", expected=1)
-    cls.debug("abishek", expected=0)
-    cls.debug("abheek", expected=0)
-    cls.debug("varun", expected=0)
-    cls.debug("abhinav", expected=0)
-    cls.debug("gopi", expected=0)
-    cls.debug("sahaana", expected=1)
-    cls.debug("aurash", expected=0)
-    cls.debug("karthik", expected=0)
-    cls.debug("keol", expected=0)
-    cls.debug("ketaki", expected=1)
-    cls.debug("ji-hern", expected=0)
-    cls.debug("esaac", expected=0)
-    cls.debug("jairus", expected=0)
-    cls.debug("siddhu", expected=0)
-    cls.debug("siddharth", expected=0)
+    for name in ["wenson", "akash", "abishek", "abheek", "varun", "abhinav", "gopi", "aurash",
+        "karthik", "keol", "ji-hern", "esaac", "jairus", "siddhu", "siddharth", "roshan", "seshadri",
+        "japheth", "rayed", "tycho", "haruto", "yuto", "joon"]:
+        cls.debug(name, expected=MALE_LABEL)
+    for name in ["wenny", "yehna", "anchal", "subha", "sahaana", "ketaki", "moeka", "cyntthia", "linzi",
+        "sneha", "neha", "hina", "yuna"]:
+        cls.debug(name, expected=FEMALE_LABEL)
 
 if __name__ == "__main__":
     cls = GenderClassifier()
