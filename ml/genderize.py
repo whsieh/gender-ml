@@ -75,9 +75,3 @@ def run_gender_test():
     testEvaluation("jairus", 0)
     testEvaluation("siddhu", 0)
     testEvaluation("siddharth", 0)
-
-if __name__ == "__main__":
-    cls = GenderClassifier()
-    for name in sys.argv[1:]:
-        print cls.gender(name),
-    print
