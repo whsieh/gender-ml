@@ -1,38 +1,42 @@
-import os
-from flask import Flask, jsonify, request
+import flask
 from ml.genderize import GenderClassifier
+from hashlib import sha256
 
-app = Flask(__name__)
+app = flask.Flask(__name__)
 
-class InvalidUsage(Exception):
-    status_code = 400
+# Configurations
+SECRET_DIGEST = "65eb608c22cff0e6c4a4bef0aa04eae4e3cc6e9c42adf53965a26a57e584c7be"
+AUTH_FAILURE_MESSAGE = "Authentication failed. Please fork github.com/whsieh/gender-ml if you want to use our API"
+INVALID_USAGE_MESSAGE = "Usage: GET /classify?auth_token=XXXXXX&names=A,B,C,D"
 
-    def __init__(self, message, status_code=None, payload=None):
-        Exception.__init__(self)
-        self.message = message
-        if status_code is not None:
-            self.status_code = status_code
-        self.payload = payload
+@app.errorhandler(400)
+def invalid_usage():
+    resp = flask.jsonify({ "status": 400, "message": INVALID_USAGE_MESSAGE })
+    resp.status_code = 400
+    return resp
 
-    def to_dict(self):
-        result = dict(self.payload or ())
-        result["message"] = self.message
-        return result
+@app.errorhandler(401)
+def authentication_failure():
+    resp = flask.jsonify({ "status": 401, "message": AUTH_FAILURE_MESSAGE })
+    resp.status_code = 401
+    return resp
 
-@app.errorhandler(InvalidUsage)
-def handle_invalid_usage(error):
-    response = jsonify(error.to_dict())
-    response.status_code = error.status_code
-    return response
-
-@app.route("/")
+@app.route("/classify", methods=["GET"])
 def classify_genders():
-    if len(request.args) == 0:
-        raise InvalidUsage("Unable to parse names", status_code=400)
+    params = flask.request.args
+    if len(params) == 0 or "auth_token" not in params or "names" not in params:
+        return invalid_usage()
+
+    if sha256(params["auth_token"].upper()).hexdigest() != SECRET_DIGEST:
+        return authentication_failure()
+
+    names = [name.strip() for name in params["names"].split(",")]
+    if len(names) == 0:
+        return flask.jsonify({})
 
     cls = GenderClassifier()
-    genders = [cls.gender(name) for name in request.args]
-    return jsonify({ name: gender for name, gender in zip(request.args, genders) })
+    genders = [cls.gender(name) for name in names]
+    return flask.jsonify({ name: gender for name, gender in zip(names, genders) })
 
 if __name__ == "__main__":
     app.run()
