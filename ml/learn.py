@@ -1,8 +1,10 @@
 import sys
+import argparse
+import os
 from util import *
 from training_util import *
 from math import log
-from genderize import DEFAULT_UNCERTAINTY_THRESHOLD
+from genderize import DEFAULT_UNCERTAINTY_THRESHOLD, DEFAULT_CLASSIFIER_FILENAME
 
 NAME_BEGIN_CHAR = "^"
 NAME_END_CHAR = "$"
@@ -38,7 +40,7 @@ def ngram_features_from_name_data(nameData, threshold=10):
     ngrams = { ngram: index for index, ngram in enumerate(sorted(scores)) }
     return ngrams, scores
 
-def test_and_training_data_from_file(filename="data/names.json", testDatasetSize=1000):
+def test_and_training_data_from_file(filename="data/names.json", testDatasetSize=0):
     allData = load_json_as_object(filename)
     allNames = np.array(allData.keys())
     testIndices = np.random.choice(np.arange(len(allNames)), testDatasetSize, replace=False)
@@ -74,7 +76,7 @@ def print_ngram_scores(ngramScores):
         print ngram.ljust(20), score
 
 def test_accuracy(testDatasetSize=500):
-    rawTrainData, rawTestData = test_and_training_data_from_file(testDatasetSize=500)
+    rawTrainData, rawTestData = test_and_training_data_from_file(testDatasetSize=testDatasetSize)
     ngramIndices, ngramScores = ngram_features_from_name_data(rawTrainData)
     print "Feature vector length: ", len(ngramIndices)
     data, labels = featurize_name_data_and_labels(rawTrainData, ngramIndices)
@@ -86,7 +88,7 @@ def test_accuracy(testDatasetSize=500):
 """
 This method is here and not util.py since it requires knowledge of a LinearSVC.
 """
-def save_linear_classifier(filename, svm, ngramIndices, rawGenderMapping, compressData=True):
+def save_linear_classifier(filename, svm, ngramIndices, rawGenderMapping, compressData=True, uncertainty=DEFAULT_UNCERTAINTY_THRESHOLD):
     names = rawGenderMapping.keys()
     trainingData = featurize_names(names, ngramIndices)
     evaluations = svm.decision_function(trainingData)
@@ -94,7 +96,7 @@ def save_linear_classifier(filename, svm, ngramIndices, rawGenderMapping, compre
         uncertainNames = []
         for evaluation, name in zip(evaluations, names):
             distanceToHyperplane = evaluation * ((2 * rawGenderMapping[name]) - 1)
-            if distanceToHyperplane < DEFAULT_UNCERTAINTY_THRESHOLD + 0.01: # HACK
+            if distanceToHyperplane <= uncertainty:
                 uncertainNames.append(name)
     else:
         uncertainNames = names
@@ -104,17 +106,35 @@ def save_linear_classifier(filename, svm, ngramIndices, rawGenderMapping, compre
     save_object_as_json(filename, {
         "intercept": svm.intercept_[0],
         "coefficients": {ngrams[index]:round(c, 4) for index, c in enumerate(svm.coef_[0])},
-        "maleNames": [name for name in uncertainNames if rawGenderMapping[name] == 0],
-        "femaleNames": [name for name in uncertainNames if rawGenderMapping[name] == 1]
+        "male_names": [name for name in uncertainNames if rawGenderMapping[name] == 0],
+        "female_names": [name for name in uncertainNames if rawGenderMapping[name] == 1],
+        "uncertainty_threshold": uncertainty
     })
 
 if __name__ == "__main__":
-    rawData, _ = test_and_training_data_from_file(testDatasetSize=0)
-    ngramIndices, ngramScores = ngram_features_from_name_data(rawData)
+    parser = argparse.ArgumentParser(description="Train a gender classifier.")
+    parser.add_argument("--dataset", "-d", default="data/names.json", help="The name of the dataset.")
+    parser.add_argument("--ngram-threshold", "-ng", default="10", help="The ngram absolute value score threshold.")
+    parser.add_argument("--regularization", "-C", default="50", help="Regularization term to use when training the SVM.")
+    parser.add_argument("--output", "-o", default=DEFAULT_CLASSIFIER_FILENAME, help="The name of the output file.")
+    parser.add_argument("--uncertainty", "-u", default=DEFAULT_UNCERTAINTY_THRESHOLD, help="The uncertainty threshold.")
+    parser.add_argument("--compress", "-c", action="store_const", const=True, default=False, help="Whether or not to compress the output dataset.")
+    parser.add_argument("--name-test", "-nt", action="store_const", const=True, default=False, help="Whether or not to run a testing routine after training.")
+    args = parser.parse_args()
+
+    args.ngram_threshold = to_int(args.ngram_threshold)
+    args.regularization = to_float(args.regularization)
+    args.uncertainty = to_float(args.uncertainty)
+
+    rawData, _ = test_and_training_data_from_file(filename=args.dataset)
+    ngramIndices, ngramScores = ngram_features_from_name_data(rawData, threshold=args.ngram_threshold)
     print "Feature vector length: ", len(ngramIndices)
     data, labels = featurize_name_data_and_labels(rawData, ngramIndices)
-    svm = run_and_time("Training SVM...", lambda: train_svm_with_data(data, labels, C=50))
-    if len(sys.argv) > 1 and sys.argv[1] == "--save":
-        filename = "data/linsvc"
-        run_and_time("Serializing SVC to %s..." % filename,
-            lambda: save_linear_classifier(filename, svm, ngramIndices, rawData, compressData=True))
+    svm = run_and_time("Training SVM...", lambda: train_svm_with_data(data, labels, C=args.regularization))
+    filename = args.output
+    run_and_time("Serializing SVC to %s..." % filename, lambda: save_linear_classifier(filename, svm, ngramIndices, rawData, compressData=args.compress, uncertainty=args.uncertainty))
+    print "Saved %s (%d K)" % (filename, os.stat(filename).st_size >> 10)
+    if args.name_test:
+        from genderize import GenderClassifier
+        cls = GenderClassifier(filename=args.output)
+        cls.run_test()

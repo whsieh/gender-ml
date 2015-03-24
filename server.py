@@ -1,5 +1,6 @@
+import re
 import flask
-from ml.genderize import GenderClassifier
+from ml import genderize
 from hashlib import sha256
 
 app = flask.Flask(__name__)
@@ -34,7 +35,7 @@ def classify_genders():
     if len(names) == 0:
         return flask.jsonify({})
 
-    cls = GenderClassifier()
+    cls = genderize.GenderClassifier()
     genders = [cls.gender(name) for name in names]
     return flask.jsonify({ name: gender for name, gender in zip(names, genders) })
 

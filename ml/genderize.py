@@ -17,13 +17,13 @@ def ngrams_in_name(name):
     return grams
 
 class GenderClassifier(object):
-    def __init__(self, filename=DEFAULT_CLASSIFIER_FILENAME, uncertaintyThreshold=DEFAULT_UNCERTAINTY_THRESHOLD):
+    def __init__(self, filename=DEFAULT_CLASSIFIER_FILENAME):
         params = load_json_as_object(filename)
-        self.maleNames = set(params["maleNames"])
-        self.femaleNames = set(params["femaleNames"])
+        self.maleNames = set(params["male_names"])
+        self.femaleNames = set(params["female_names"])
         self.intercept = params["intercept"]
         self.coefficients = params["coefficients"]
-        self.uncertaintyThreshold = uncertaintyThreshold
+        self.uncertaintyThreshold = params["uncertainty_threshold"]
 
     def _signed_distance(self, name):
         dotProduct, norm = 0, 0
@@ -73,17 +73,15 @@ class GenderClassifier(object):
             return genderFromData
         return self._label_from_signed_distance(self._signed_distance(name))
 
-def run_test():
-    # Tests the classifier against some anomalies...
-    cls = GenderClassifier()
-    print "NAME".ljust(15), "EXP".ljust(10), "L(DATA)".ljust(10), "L(DIST)".ljust(10), "DIST"
-    for name in ["wenson", "akash", "abishek", "abheek", "varun", "abhinav", "gopi", "aurash",
-        "karthik", "keol", "ji-hern", "esaac", "jairus", "siddhu", "siddharth", "roshan", "seshadri",
-        "japheth", "rayed", "tycho", "haruto", "yuto", "joon"]:
-        cls.debug(name, expected=MALE_LABEL)
-    for name in ["wenny", "yehna", "anchal", "subha", "sahaana", "ketaki", "moeka", "cyntthia", "linzi",
-        "sneha", "neha", "hina", "yuna"]:
-        cls.debug(name, expected=FEMALE_LABEL)
+    def run_test(self):
+        print "NAME".ljust(15), "EXP".ljust(10), "L(DATA)".ljust(10), "L(DIST)".ljust(10), "DIST"
+        for name in ["wenson", "akash", "abishek", "abheek", "varun", "abhinav", "gopi", "aurash",
+            "karthik", "keol", "ji-hern", "esaac", "jairus", "siddhu", "siddharth", "roshan", "seshadri",
+            "japheth", "rayed", "tycho", "haruto", "yuto", "joon"]:
+            self.debug(name, expected=MALE_LABEL)
+        for name in ["wenny", "yehna", "anchal", "subha", "sahaana", "ketaki", "moeka", "cyntthia", "linzi",
+            "sneha", "neha", "hina", "yuna"]:
+            self.debug(name, expected=FEMALE_LABEL)
 
 if __name__ == "__main__":
     cls = GenderClassifier()

@@ -1,5 +1,25 @@
 import json
 
+"""
+Attempts to safely convert s to a float value. If s cannot be
+converted to a float, returns None.
+"""
+def to_float(s):
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+"""
+Attempts to safely convert s to an int value. If s cannot be
+converted to an int, returns None.
+"""
+def to_int(s):
+    try:
+        return int(s)
+    except ValueError:
+        return None
+
 def filename_with_extension(filename, extension):
     extension = "." + extension if extension[0] != "." else extension
     return filename + extension if filename[-len(extension):] != extension else filename
