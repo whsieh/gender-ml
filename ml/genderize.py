@@ -2,6 +2,7 @@ from util import *
 import sys
 
 DEFAULT_UNCERTAINTY_THRESHOLD = 0.1
+DEFAULT_CLASSIFIER_FILENAME = "data/linsvc.json"
 MALE_LABEL = 0
 FEMALE_LABEL = 1
 UNCERTAIN_LABEL = 2
@@ -16,7 +17,7 @@ def ngrams_in_name(name):
     return grams
 
 class GenderClassifier(object):
-    def __init__(self, filename="data/linsvc.json", uncertaintyThreshold=DEFAULT_UNCERTAINTY_THRESHOLD):
+    def __init__(self, filename=DEFAULT_CLASSIFIER_FILENAME, uncertaintyThreshold=DEFAULT_UNCERTAINTY_THRESHOLD):
         params = load_json_as_object(filename)
         self.maleNames = set(params["maleNames"])
         self.femaleNames = set(params["femaleNames"])
@@ -25,13 +26,12 @@ class GenderClassifier(object):
         self.uncertaintyThreshold = uncertaintyThreshold
 
     def _signed_distance(self, name):
-        evaluation = self.intercept
-        ngrams = ngrams_in_name(name)
-        l1Norm = float(len(ngrams))
-        for ngram in ngrams:
+        dotProduct, norm = 0, 0
+        for ngram in ngrams_in_name(name):
             if ngram in self.coefficients:
-                evaluation += self.coefficients[ngram] / l1Norm
-        return evaluation
+                dotProduct += self.coefficients[ngram]
+                norm += 1
+        return (dotProduct / norm) + self.intercept
 
     def _label_from_signed_distance(self, distance):
         if abs(distance) < self.uncertaintyThreshold:
@@ -73,7 +73,7 @@ class GenderClassifier(object):
             return genderFromData
         return self._label_from_signed_distance(self._signed_distance(name))
 
-def run_gender_test():
+def run_test():
     # Tests the classifier against some anomalies...
     cls = GenderClassifier()
     print "NAME".ljust(15), "EXP".ljust(10), "L(DATA)".ljust(10), "L(DIST)".ljust(10), "DIST"

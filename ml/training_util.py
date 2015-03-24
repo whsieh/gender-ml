@@ -33,18 +33,3 @@ def train_svm_with_data(data, labels, C=1.0):
     classifier = svm.LinearSVC(C=C)
     classifier.fit(data, labels)
     return classifier
-
-"""
-This method is training.py and not util.py since it requires knowledge
-of a LinearSVC.
-"""
-def save_linear_classifier(filename, svm, ngramIndices, rawData):
-    ngrams = [None] * len(ngramIndices)
-    for ngram, index in ngramIndices.items():
-        ngrams[index] = ngram
-    save_object_as_json(filename, {
-        "intercept": svm.intercept_[0],
-        "coefficients": {ngrams[index]:round(c, 4) for index, c in enumerate(svm.coef_[0])},
-        "maleNames": [name for name in rawData if rawData[name] == 0],
-        "femaleNames": [name for name in rawData if rawData[name] == 1]
-    })

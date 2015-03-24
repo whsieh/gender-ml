@@ -1,6 +1,8 @@
+import sys
 from util import *
 from training_util import *
 from math import log
+from genderize import DEFAULT_UNCERTAINTY_THRESHOLD
 
 NAME_BEGIN_CHAR = "^"
 NAME_END_CHAR = "$"
@@ -81,10 +83,38 @@ def test_accuracy(testDatasetSize=500):
     predictions = run_and_time("Predicting test data...", lambda: svm.predict(testData))
     print prediction_accuracy(predictions, testLabels)
 
+"""
+This method is here and not util.py since it requires knowledge of a LinearSVC.
+"""
+def save_linear_classifier(filename, svm, ngramIndices, rawGenderMapping, compressData=True):
+    names = rawGenderMapping.keys()
+    trainingData = featurize_names(names, ngramIndices)
+    evaluations = svm.decision_function(trainingData)
+    if compressData:
+        uncertainNames = []
+        for evaluation, name in zip(evaluations, names):
+            distanceToHyperplane = evaluation * ((2 * rawGenderMapping[name]) - 1)
+            if distanceToHyperplane < DEFAULT_UNCERTAINTY_THRESHOLD + 0.01: # HACK
+                uncertainNames.append(name)
+    else:
+        uncertainNames = names
+    ngrams = [None] * len(ngramIndices)
+    for ngram, index in ngramIndices.items():
+        ngrams[index] = ngram
+    save_object_as_json(filename, {
+        "intercept": svm.intercept_[0],
+        "coefficients": {ngrams[index]:round(c, 4) for index, c in enumerate(svm.coef_[0])},
+        "maleNames": [name for name in uncertainNames if rawGenderMapping[name] == 0],
+        "femaleNames": [name for name in uncertainNames if rawGenderMapping[name] == 1]
+    })
+
 if __name__ == "__main__":
     rawData, _ = test_and_training_data_from_file(testDatasetSize=0)
     ngramIndices, ngramScores = ngram_features_from_name_data(rawData)
     print "Feature vector length: ", len(ngramIndices)
     data, labels = featurize_name_data_and_labels(rawData, ngramIndices)
     svm = run_and_time("Training SVM...", lambda: train_svm_with_data(data, labels, C=50))
-    save_linear_classifier("data/linsvc", svm, ngramIndices, rawData)
+    if len(sys.argv) > 1 and sys.argv[1] == "--save":
+        filename = "data/linsvc"
+        run_and_time("Serializing SVC to %s..." % filename,
+            lambda: save_linear_classifier(filename, svm, ngramIndices, rawData, compressData=True))
