@@ -4,6 +4,7 @@ from ml import genderize
 from hashlib import sha256
 
 app = flask.Flask(__name__)
+classifier = genderize.GenderClassifier()
 
 # Configurations
 INVALID_USAGE_MESSAGE = "Usage: GET /classify?names=A,B,C,D"
@@ -24,9 +25,7 @@ def classify_genders():
     if len(names) == 0:
         return flask.jsonify({})
 
-    cls = genderize.GenderClassifier()
-    genders = [cls.gender(name) for name in names]
-    return flask.jsonify({ name: gender for name, gender in zip(names, genders) })
+    return flask.jsonify({name: classifier.gender(name) for name in names})
 
 if __name__ == "__main__":
     app.run()
