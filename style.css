@@ -1,0 +1,81 @@
+body {
+    font-family: "Source Sans Pro", sans-serif;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    background-color: #F8F8F8;
+}
+
+#main-content {
+    margin: 0 auto;
+    height: 100%;
+    padding: 50px;
+    width: calc(50% + 150px);
+    box-shadow: 0px 0px 1px #888888;
+    background-color: white;
+    overflow: auto;
+}
+
+h1 {
+    font-size: 80px;
+    margin: 50px 0 10px 0;
+}
+
+h4 {
+    font-size: 20px;
+    margin-bottom: 50px;
+}
+
+input {
+    text-align: center;
+    border: none;
+    border-bottom: 1px dashed gray;
+    font-size: 25px;
+    width: 33%;
+    margin: 0 auto 50px auto;
+}
+
+input:focus {
+    outline: 0;
+}
+
+.description-sm {
+    font-size: 16px;
+}
+
+.description-lg {
+    font-size: 25px;
+}
+
+.description-sm,
+.description-lg {
+    text-align: center;
+    width: 60%;
+    margin: 0 auto;
+}
+
+#gender-icon {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    padding-bottom: 50px;
+    margin: 0 auto 50px auto;
+    box-shadow: 0px 0px 3px #888888;
+    display: none;
+}
+
+.neutral {
+    background-color: #DDD;
+}
+
+.male {
+    background-color: #87CEFA;
+}
+
+.female {
+    background-color: #FAAFBE;
+}
+
+#disclaimer {
+    margin-top: 30%;
+}
