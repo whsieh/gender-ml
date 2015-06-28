@@ -49,16 +49,18 @@ class GenderClassifier(object):
     Returns a tuple containing the signed distance, predicted label using
     the signed distance, and the predicted label using the data.
     """
-    def debug(self, name, expected=None):
+    def debug(self, name, expected=None, loud=False):
+        name = name.lower()
         distance = self._signed_distance(name)
         labelFromDistance = self._label_from_signed_distance(distance)
         labelFromData = self._label_from_data(name)
-        print name.ljust(15),
-        if expected is not None:
-            print str(expected).ljust(10),
-        print str(labelFromData).ljust(10),
-        print str(labelFromDistance).ljust(10),
-        print str(round(distance, 2))
+        if loud:
+            print name.ljust(15),
+            if expected is not None:
+                print str(expected).ljust(10),
+            print str(labelFromData).ljust(10),
+            print str(labelFromDistance).ljust(10),
+            print str(round(distance, 2))
         return labelFromData, labelFromDistance, distance
 
     """
