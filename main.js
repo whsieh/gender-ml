@@ -1,9 +1,15 @@
 
 $(function() {
     var currentName = "";
+    var hasSentFirstRequest = false;
+    var hasReceivedFirstResponse = false;
 
-    function handleReceivedGenderDebugData(data) {
-        console.log(data)
+    function didSendFirstRequest() {
+        $(".loading").show();
+    }
+
+    function didReceiveFirstResponse() {
+        $(".loading").hide();
     }
 
     function updateCurrentNameFromInput() {
@@ -34,6 +40,10 @@ $(function() {
             return;
 
         $.getJSON("http://gender-ml.herokuapp.com/debug?callback=?&name=" + currentName, null, function(data) {
+            if (!hasReceivedFirstResponse) {
+                didReceiveFirstResponse();
+                hasReceivedFirstResponse = true;
+            }
             var distLabel = parseInt(data["label_from_dist"]);
             var dataLabel = parseInt(data["label_from_data"]);
             var distance = Math.round(parseFloat(data["hyperplane_dist"]) * 100) / 100;
@@ -48,6 +58,11 @@ $(function() {
             else
                 genderIcon.addClass("neutral");
         });
+
+        if (!hasSentFirstRequest) {
+            didSendFirstRequest();
+            hasSentFirstRequest = true;
+        }
     }
 
     setInterval(update, 1000);

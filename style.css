@@ -90,3 +90,18 @@ input:focus {
 #disclaimer {
     margin-top: 30%;
 }
+
+#loading-icon {
+    width: 25px;
+    height: 25px;
+    margin-top: 30%;
+}
+
+#loading-message {
+    width: 250px;
+    margin: 20px auto 0 auto;
+}
+
+.loading {
+    display: none;
+}
